@@ -1,8 +1,8 @@
-class EpsilonSoftPolicy:
+class EpsilonGreedyPolicy:
 
     def __init__(self, epsilon: float, nA: int):
         """
-        Inicializa la política epsilon-soft.
+        Inicializa la política epsilon-greedy.
 
         :param epsilon: Probabilidad de exploración.
         :param nA: Número de acciones posibles.
@@ -25,3 +25,14 @@ class EpsilonSoftPolicy:
         best_action = np.argmax(Q[state])
         pi_A[best_action] += (1.0 - self.epsilon)
         return pi_A
+
+    def get_action(self, Q, state):
+        """
+        Selecciona una acción según una política epsilon-greedy a partir de una epsilon-soft.
+        :param Q: Matriz de valores Q.
+        :param state: Estado actual.
+        :return: Política seleccionada.
+        """
+
+        pi_A = self.get_action_probabilities(Q, state)
+        return np.random.choice(np.arange(self.nA), p=pi_A)
