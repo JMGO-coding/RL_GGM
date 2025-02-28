@@ -31,19 +31,37 @@ class On_P_MC_AllVisits(Agent):
         self.greedy_policy = None
 
     
-    def get_action(self, state):
+    def get_soft_action(self, state):
+        """
+        Selecciona una acción en base a un estado de partida y una política de decisión
+        """
+        return self.epsilon_soft_policy.get_action(self.Q, state)
+
+    def get_greedy_action(self, state):
         """
         Selecciona una acción en base a un estado de partida y una política de decisión
         """
         return self.epsilon_soft_policy.get_action(self.Q, state)
         
 
-    def full_episode(Q, obs):
-        states = []
+    def full_episode(Q, seed):
+        state, info = env.reset(seed=seed)
+        states = [state]
         actions = []
-        action = agent.get_action(obs)
-        next_obs, reward, terminated, truncated, info = env.step(action)
+        done = False
+        # play one episode
+        while not done:
+            action = self.get_soft_action(state)
+            next_state, reward, terminated, truncated, info = env.step(action)
+            # update the agent
+            agent.update(self, state, action, next_state, reward, terminated, truncated, info)
+            # update if the environment is done and the current state
+            done = terminated or truncated
+            state = next_state
 
+            states.append(state)
+            action.append(actions)
+        
         return states, actions
         
     def update(self, obs, action, next_obs, reward, terminated, truncated, info):
