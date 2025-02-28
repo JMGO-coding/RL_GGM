@@ -52,3 +52,12 @@ class GreedyFromQPolicy:
             done = terminated or truncated
         
         return states, actions  # Devuelve la secuencia de acciones tomadas
+
+    def get_action(self, state):
+        """
+        Selecciona una acción según una política greedy.
+        :param state: Estado actual.
+        :return: Política seleccionada.
+        """
+
+        return np.argmax(self.Q[state, :])
