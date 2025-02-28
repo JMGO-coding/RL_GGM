@@ -1,4 +1,4 @@
-class EpsilonGreedyPolicy:
+class EpsilonSoftPolicy:
 
     def __init__(self, epsilon: float, nA: int):
         """
