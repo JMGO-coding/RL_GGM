@@ -28,6 +28,7 @@ class AgentMCOnPolicyAllVisits(Agent):
         self.epsilon_soft_policy = EpsilonSoft(epsilon=self.epsilon, nA=self.nA)
         self.stats = 0.0
         self.list_stats = []
+        self.episode_lengths = []    # Lista para almacenar las longitudes de los episodios
 
     def reset(self):
         """
@@ -38,6 +39,7 @@ class AgentMCOnPolicyAllVisits(Agent):
         self.returns = np.zeros([self.env.observation_space.n, self.nA])
         self.stats = 0.0
         self.list_stats = []
+        self.episode_lengths = []
     
     def get_soft_action(self, state):
         """
@@ -56,7 +58,7 @@ class AgentMCOnPolicyAllVisits(Agent):
         # Generar un episodio siguiendo la política epsilon-soft
         while not done:    
             action = self.get_soft_action(state)
-            new_state, reward, terminated, truncated, info = env.step(action)
+            new_state, reward, terminated, truncated, info = self.env.step(action)
             
             done = terminated or truncated
             episode.append((state, action, reward))  # Almacenar estado, acción y recompensa
@@ -79,8 +81,12 @@ class AgentMCOnPolicyAllVisits(Agent):
 
             # Usamos el promedio de los retornos observados
             self.Q[state, action] = self.returns[state, action] / self.n_visits[state, action]
+
+        # Guardamos datos sobre la evolución
+        self.stats += G
         
     def train(self, num_episodes):
+        step_display = num_episodes / 10
         for t in tqdm(range(num_episodes)):
             if self.decay:
                 self.epsilon = min(1.0, 1000.0/(t+1))
@@ -88,20 +94,19 @@ class AgentMCOnPolicyAllVisits(Agent):
             episode = self.full_episode(seed = t)  # Generar episodio
             self.update(episode)  # Actualizar Q
 
-            # Guardamos datos sobre la evolución
-            self.stats += G
             self.list_stats.append(self.stats/(t+1))
+            self.episode_lengths.append(len(episode))
 
             # Para mostrar la evolución
             if t % step_display == 0 and t != 0:
-                print(f"success: {stats/t}, epsilon: {epsilon}")
+                print(f"success: {self.stats/t}, epsilon: {self.epsilon}")
 
-    def stats(self):
+    def get_stats(self):
         """
-        Retorna los resultados estadísticos, incluyendo el promedio de recompensas por episodio
-        y la evolución de la recompensa acumulada por episodio
+        Retorna los resultados estadísticos, incluyendo el promedio de recompensas por episodio,
+        la evolución de la recompensa acumulada por episodio y la longitud de los episodios
         """
         # Retorna el promedio acumulado de la recompensa por episodio
         avg_stats = self.stats / len(self.list_stats) if len(self.list_stats) > 0 else 0
 
-        return avg_stats, self.list_stats
+        return avg_stats, self.list_stats, self.episode_lengths
