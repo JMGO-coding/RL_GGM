@@ -26,7 +26,7 @@ class AgentMCOnPolicyAllVisits(Agent):
         self.Q = np.zeros([env.observation_space.n, self.nA])
         self.n_visits = np.zeros([env.observation_space.n, self.nA])
         self.returns = np.zeros([env.observation_space.n, self.nA])
-        self.epsilon_soft_policy = EpsilonSoft(epsilon=self.epsilon, nA=self.nA)
+        self.epsilon_soft_policy = EpsilonSoftPolicy(epsilon=self.epsilon, nA=self.nA)
         self.stats = 0.0
         self.list_stats = []
         self.episode_lengths = []    # Lista para almacenar las longitudes de los episodios
