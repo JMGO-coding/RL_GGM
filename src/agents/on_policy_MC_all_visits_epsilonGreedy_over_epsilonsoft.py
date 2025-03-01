@@ -84,8 +84,7 @@ class AgentMCOnPolicyAllVisits(Agent):
             # Usamos el promedio de los retornos observados
             self.Q[state, action] = self.returns[state, action] / self.n_visits[state, action]
 
-        # Guardamos datos sobre la evolución
-        self.stats += G
+        return G
         
     def train(self, num_episodes):
         step_display = num_episodes / 10
@@ -94,8 +93,10 @@ class AgentMCOnPolicyAllVisits(Agent):
                 self.epsilon = min(1.0, 1000.0/(t+1))
                 
             episode = self.full_episode(seed = t)  # Generar episodio
-            self.update(episode)  # Actualizar Q
+            G = self.update(episode)  # Actualizar Q
 
+            # Guardamos datos sobre la evolución
+            self.stats += G
             self.list_stats.append(self.stats/(t+1))
             self.episode_lengths.append(len(episode))
 
