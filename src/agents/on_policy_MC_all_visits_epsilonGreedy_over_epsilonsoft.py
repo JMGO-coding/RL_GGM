@@ -13,25 +13,35 @@ class On_P_MC_AllVisits(Agent):
         Inicializa el agente de decisión..
         """
 
-        assert 0 <= eps <= 1
+        assert 0 <= epsilon <= 1
         assert 0 <= discount_factor <= 1
         
         # Environment del agente
         self.env: gym.Env = env
         self.nA = env.action_space.n
-        self.Q = np.zeros([env.observation_space.n, nA])
-        self.epsilon_soft_policy = EpsilonSoft(epsilon=epsilon, nA=nA)
+        self.Q = np.zeros([env.observation_space.n, self.nA])
+        self.epsilon_soft_policy = EpsilonSoft(epsilon=epsilon, nA=self.nA)
         self.greedy_policy = None
         self.discount_factor = discount_factor
         self.factor = 1
+        self.n_visits = np.zeros([env.observation_space.n, self.nA])
+        self.returns = np.zeros([env.observation_space.n, self.nA])
+        self.G = 0
+        self.stats = 0.0
+        self.list_stats = []
+        self.t = 0
 
     def reset(self):
         """
         Reinicia el agente
         """
-        self.Q = np.zeros([env.observation_space.n, nA])
+        self.Q = np.zeros([self.env.observation_space.n, nA])
         self.greedy_policy = None
         self.factor = 1
+        self.G = 0
+        self.stats = 0.0
+        self.list_stats = []
+        self.t = 0
     
     def get_soft_action(self, state):
         """
@@ -45,8 +55,8 @@ class On_P_MC_AllVisits(Agent):
         """
         return self.greedy_policy.get_action(state)
 
-    def full_episode(Q, seed):
-        state, info = env.reset(seed=seed)
+    def full_episode(self, Q, seed):
+        state, info = self.env.reset(seed=seed)
         states = []
         actions = []
         episode = []
@@ -54,7 +64,7 @@ class On_P_MC_AllVisits(Agent):
         # play one episode
         while not done:
             action = self.get_soft_action(state)
-            next_state, reward, terminated, truncated, info = env.step(action)
+            next_state, reward, terminated, truncated, info = self.env.step(action)
             # update the agent
             agent.update(self, state, action, next_state, reward, terminated, truncated, info)
             # update if the environment is done and the current state
@@ -62,21 +72,22 @@ class On_P_MC_AllVisits(Agent):
             episode.append((state, action, reward))  # Almacena estado, acción y recompensa
 
             states.append(state)
-            action.append(actions)
+            actions.append(action)
             state = next_state
 
         # Al final del episodio, actualizamos Q utilizando todas las visitas
         for (state, action, reward) in episode:
-            n_visits[state, action] += 1  # Contamos cuántas veces hemos visitado (s, a)
-            returns[state, action] += G  # Acumulamos los retornos
+            self.n_visits[state, action] += 1  # Contamos cuántas veces hemos visitado (s, a)
+            self.returns[state, action] += self.G  # Acumulamos los retornos
             # Usamos el promedio de los retornos observados
-            self.Q[state, action] = returns[state, action] / n_visits[state, action]
+            self.Q[state, action] = self.returns[state, action] / self.n_visits[state, action]
 
         self.greedy_policy = GreedyFromQPolicy(self.env, self.Q)
 
         # Guardamos datos sobre la evolución
-        stats += G
-        list_stats.append(stats/(t+1))
+        self.stats += self.G
+        self.list_stats.append(self.stats/(self.t+1))
+        self.t += 1
         
         return states, actions
         
@@ -92,7 +103,7 @@ class On_P_MC_AllVisits(Agent):
         :param info: Información sobre el entorno.
         """
         
-        G += self.factor * reward
+        self.G += self.factor * reward
         self.factor *= self.discount_factor
 
         
