@@ -1,3 +1,5 @@
+import gymnasium as gym
+
 class GreedyFromQPolicy:
 
     def __init__(self, env, Q):
