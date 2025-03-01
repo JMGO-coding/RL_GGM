@@ -10,7 +10,7 @@ from policies.greedy_from_Q import GreedyFromQPolicy
 class AgentMCOnPolicyAllVisits(Agent):
     def __init__(self, env: gym.Env, epsilon: float, decay: bool, discount_factor: float):
         """
-        Inicializa el agente de decisión..
+        Inicializa el agente de decisión
         """
 
         assert 0 <= epsilon <= 1
@@ -25,11 +25,7 @@ class AgentMCOnPolicyAllVisits(Agent):
         self.Q = np.zeros([env.observation_space.n, self.nA])
         self.n_visits = np.zeros([env.observation_space.n, self.nA])
         self.returns = np.zeros([env.observation_space.n, self.nA])
-        
         self.epsilon_soft_policy = EpsilonSoft(epsilon=self.epsilon, nA=self.nA)
-        self.greedy_policy = None
-        self.discount_factor = discount_factor
-        
         self.stats = 0.0
         self.list_stats = []
 
@@ -40,7 +36,6 @@ class AgentMCOnPolicyAllVisits(Agent):
         self.Q = np.zeros([self.env.observation_space.n, self.nA])
         self.n_visits = np.zeros([self.env.observation_space.n, self.nA])
         self.returns = np.zeros([self.env.observation_space.n, self.nA])
-        self.greedy_policy = None
         self.stats = 0.0
         self.list_stats = []
     
@@ -49,14 +44,8 @@ class AgentMCOnPolicyAllVisits(Agent):
         Selecciona una acción en base a un estado de partida y una política epsilon-soft
         """
         return self.epsilon_soft_policy.get_action(self.Q, state)
-    
-    def get_greedy_action(self, state):
-        """
-        Selecciona una acción en base a un estado de partida y una política greedy
-        """
-        return self.greedy_policy.get_action(state)
 
-    def full_episode(self, seed, t):
+    def full_episode(self, seed):
         """
         Genera un episodio completo siguiendo la política epsilon-soft
         """
@@ -65,10 +54,7 @@ class AgentMCOnPolicyAllVisits(Agent):
         episode = []
 
         # Generar un episodio siguiendo la política epsilon-soft
-        while not done:
-            if self.decay:
-                self.epsilon = min(1.0, 1000.0/(t+1))
-                
+        while not done:    
             action = self.get_soft_action(state)
             new_state, reward, terminated, truncated, info = env.step(action)
             
@@ -96,5 +82,26 @@ class AgentMCOnPolicyAllVisits(Agent):
         
     def train(self, num_episodes):
         for t in tqdm(range(num_episodes)):
-            episode = self.full_episode(seed = 100, t=t)  # Generar episodio
+            if self.decay:
+                self.epsilon = min(1.0, 1000.0/(t+1))
+                
+            episode = self.full_episode(seed = t)  # Generar episodio
             self.update(episode)  # Actualizar Q
+
+            # Guardamos datos sobre la evolución
+            self.stats += G
+            self.list_stats.append(self.stats/(t+1))
+
+            # Para mostrar la evolución
+            if t % step_display == 0 and t != 0:
+                print(f"success: {stats/t}, epsilon: {epsilon}")
+
+    def stats(self):
+        """
+        Retorna los resultados estadísticos, incluyendo el promedio de recompensas por episodio
+        y la evolución de la recompensa acumulada por episodio
+        """
+        # Retorna el promedio acumulado de la recompensa por episodio
+        avg_stats = self.stats / len(self.list_stats) if len(self.list_stats) > 0 else 0
+
+        return avg_stats, self.list_stats
