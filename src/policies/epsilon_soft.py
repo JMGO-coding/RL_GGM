@@ -1,3 +1,5 @@
+import numpy as np
+
 class EpsilonSoftPolicy:
 
     def __init__(self, epsilon: float, nA: int):
