@@ -83,7 +83,7 @@ class AgentMCOnPolicyAllVisits(Agent):
 
             # Usamos el promedio de los retornos observados
             self.Q[state, action] = self.returns[state, action] / self.n_visits[state, action]
-
+        print(G)
         return G
         
     def train(self, num_episodes):
