@@ -41,7 +41,7 @@ class AgentMCOnPolicyAllVisits(Agent):
         self.list_stats = []
         self.episode_lengths = []
     
-    def get_soft_action(self, state):
+    def get_action(self, state):
         """
         Selecciona una acción en base a un estado de partida y una política epsilon-soft
         """
