@@ -77,10 +77,7 @@ class On_P_MC_AllVisits(Agent):
 
         # Al final del episodio, actualizamos Q utilizando todas las visitas
         for (state, action, reward) in episode:
-            self.n_visits[state, action] += 1  # Contamos cuántas veces hemos visitado (s, a)
-            self.returns[state, action] += self.G  # Acumulamos los retornos
-            # Usamos el promedio de los retornos observados
-            self.Q[state, action] = self.returns[state, action] / self.n_visits[state, action]
+            
 
         self.greedy_policy = GreedyFromQPolicy(self.env, self.Q)
 
@@ -105,6 +102,11 @@ class On_P_MC_AllVisits(Agent):
         
         self.G += self.factor * reward
         self.factor *= self.discount_factor
+
+        self.n_visits[state, action] += 1  # Contamos cuántas veces hemos visitado (s, a)
+        self.returns[state, action] += self.G  # Acumulamos los retornos
+        # Usamos el promedio de los retornos observados
+        self.Q[state, action] = self.returns[state, action] / self.n_visits[state, action]
 
         
 
