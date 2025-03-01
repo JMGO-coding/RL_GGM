@@ -5,6 +5,7 @@ from .agent import Agent
 from policies.epsilon_soft import EpsilonSoftPolicy
 from policies.greedy_from_Q import GreedyFromQPolicy
 import gymnasium as gym
+from tqdm import tqdm
 #######################################
 
 
