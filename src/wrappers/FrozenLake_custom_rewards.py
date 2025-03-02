@@ -10,7 +10,7 @@ class FrozenLakeCustomRewards(RewardWrapper):
         next_state, reward, terminated, truncated, info = self.env.step(action)
         
         # Si el episodio termina y la recompensa es 0, significa que caímos en un agujero
-        if terminated and reward == 0:
-            reward = self.hole_penalty  # Penalización negativa
+        if done and next_state != self.goal_state:
+            reward = -1  # Penalización por fallar
 
         return next_state, reward, terminated, truncated, info
