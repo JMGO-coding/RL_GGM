@@ -53,7 +53,7 @@ class AgentMCOnPolicyAllVisits(Agent):
         """
         Genera un episodio completo siguiendo la política epsilon-soft
         """
-        state, info = self.env.reset(seed=100)
+        state, info = self.env.reset(seed=seed)
         done = False
         episode = []
 
