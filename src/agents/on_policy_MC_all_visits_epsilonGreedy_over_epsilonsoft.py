@@ -53,14 +53,13 @@ class AgentMCOnPolicyAllVisits(Agent):
         """
         Genera un episodio completo siguiendo la política epsilon-soft
         """
-        state, info = self.env.reset(seed=seed)
+        state, info = self.env.reset(seed=100)
         done = False
         episode = []
 
         # Generar un episodio siguiendo la política epsilon-soft
         while not done:    
             action = self.get_action(state)
-            print(action)
             new_state, reward, terminated, truncated, info = self.env.step(action)
             
             done = terminated or truncated
