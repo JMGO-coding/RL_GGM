@@ -1,7 +1,6 @@
 import gymnasium as gym
-from gymnasium.wrappers import Wrapper
 
-class FrozenLakeCustomRewards(Wrapper):
+class FrozenLakeCustomRewards(gym.Wrapper):
     def __init__(self, env, hole_penalty=-1.0):
         super().__init__(env)
         self.hole_penalty = hole_penalty  # Penalización por caer en un agujero
