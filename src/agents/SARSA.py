@@ -82,7 +82,7 @@ class AgentSARSA(Agent):
             else:
                 next_action = None  # No hay acción en el estado terminal
 
-            # Actualización de Q(s, a) con SARSA
+            # Actualización de Q(S, A) con SARSA
             self.update(state, action, reward, next_state, next_action)
 
             # Avanzar al siguiente estado y acción
