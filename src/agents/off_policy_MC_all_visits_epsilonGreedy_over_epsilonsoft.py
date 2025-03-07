@@ -9,7 +9,7 @@ from tqdm import tqdm
 #######################################
 
 
-class AgentMCOnPolicyAllVisits(Agent):
+class AgentMCOffPolicyAllVisits(Agent):
     def __init__(self, env: gym.Env, epsilon: float, decay: bool, discount_factor: float):
         """
         Inicializa el agente de decisión
@@ -25,9 +25,10 @@ class AgentMCOnPolicyAllVisits(Agent):
         self.decay = decay
         self.nA = env.action_space.n
         self.Q = np.zeros([env.observation_space.n, self.nA])
+        self.C = np.zeros([env.observation_space.n, self.nA])
         self.n_visits = np.zeros([env.observation_space.n, self.nA])
-        self.returns = np.zeros([env.observation_space.n, self.nA])
-        self.epsilon_soft_policy = EpsilonSoftPolicy(epsilon=self.epsilon, nA=self.nA)
+        self.epsilon_soft_policy = EpsilonSoftPolicy(epsilon=self.epsilon, nA=self.nA)  # Política de comportamiento (b)
+        self.greedy_policy = GreedyFromQPolicy(env=self.env, Q=self.Q)    # Política objetivo (pi)
         self.stats = 0.0
         self.list_stats = []
         self.episode_lengths = []    # Lista para almacenar las longitudes de los episodios
@@ -37,17 +38,24 @@ class AgentMCOnPolicyAllVisits(Agent):
         Reinicia el agente
         """
         self.Q = np.zeros([self.env.observation_space.n, self.nA])
+        self.C = np.zeros([self.env.observation_space.n, self.nA])
         self.n_visits = np.zeros([self.env.observation_space.n, self.nA])
-        self.returns = np.zeros([self.env.observation_space.n, self.nA])
+        self.greedy_policy = GreedyFromQPolicy(env=self.env, Q=self.Q)
         self.stats = 0.0
         self.list_stats = []
         self.episode_lengths = []
     
-    def get_action(self, state):
+    def get_soft_action(self, state):
         """
         Selecciona una acción en base a un estado de partida y una política epsilon-soft
         """
         return self.epsilon_soft_policy.get_action(self.Q, state)
+
+    def get_greedy_action(self, state):
+        """
+        Selecciona una acción en base a un estado de partida y una política greedy
+        """
+        return self.greedy_policy.get_action(state)
 
     def full_episode(self, seed):
         """
@@ -59,7 +67,7 @@ class AgentMCOnPolicyAllVisits(Agent):
 
         # Generar un episodio siguiendo la política epsilon-soft
         while not done:    
-            action = self.get_action(state)
+            action = self.get_soft_action(state)
             new_state, reward, terminated, truncated, info = self.env.step(action)
             
             done = terminated or truncated
@@ -70,19 +78,35 @@ class AgentMCOnPolicyAllVisits(Agent):
         
     def update(self, episode):
         """
-        Actualiza Q al final del episodio utilizando todas las visitas
+        Actualiza Q y W al final del episodio utilizando todas las visitas
         """
+        G = 0  # Retorno
+        W = 1  # Peso
         
-        G = 0.0  # Retorno
         # Recorrer el episodio en orden inverso
         for (state, action, reward) in reversed(episode):
+            # Calcular el retorno acumulado
             G = self.discount_factor * G + reward
-            
-            self.n_visits[state, action] += 1  # Contamos cuántas veces hemos visitado (state, action)
-            self.returns[state, action] += G  # Acumulamos los retornos
 
-            # Usamos el promedio de los retornos observados
-            self.Q[state, action] = self.returns[state, action] / self.n_visits[state, action]
+            # Actualizar C(s, a)
+            self.C[state,action] += W
+
+            # Actualizar Q(s, a)
+            self.Q[state, action] += (W / self.C[state,action]) * (G - self.Q[state,action])
+
+            # Actualizar política objetivo (pi)
+            self.greedy_policy.Q = self.Q  # Actualizar la matriz Q para la política greedy
+            self.greedy_policy.pi = self.greedy_policy.compute_policy_matrix()  # Recalcular la política óptima
+
+            # Si la acción tomada no es la acción según la política objetivo (pi), salir del bucle
+            if action != self.get_greedy_action(state):
+                break
+
+            # Obtenemos las probabilidades de acción de la política de comportamiento (b) 
+            action_probabilities_b = self.epsilon_soft_policy.get_action_probabilities(self.Q, state)
+
+            # Actualizar el peso W
+            W = W * 1 / action_probabilities_b[action]
             
         # Guardamos datos sobre la evolución
         self.stats += G
