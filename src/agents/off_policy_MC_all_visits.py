@@ -132,5 +132,4 @@ class AgentMCOffPolicyAllVisits(Agent):
         Retorna los resultados estadísticos, incluyendo la evolución de
         la recompensa acumulada por episodio y la longitud de los episodios
         """
-
         return self.list_stats, self.episode_lengths
