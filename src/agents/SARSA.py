@@ -120,10 +120,7 @@ class AgentSARSA(Agent):
 
     def get_stats(self):
         """
-        Retorna los resultados estadísticos, incluyendo el promedio de recompensas por episodio,
-        la evolución de la recompensa acumulada por episodio y la longitud de los episodios
+        Retorna los resultados estadísticos, incluyendo la evolución de
+        la recompensa acumulada por episodio y la longitud de los episodios
         """
-        # Retorna el promedio acumulado de la recompensa por episodio
-        avg_stats = self.stats / len(self.list_stats) if len(self.list_stats) > 0 else 0
-
-        return avg_stats, self.list_stats, self.episode_lengths
+        return self.list_stats, self.episode_lengths
