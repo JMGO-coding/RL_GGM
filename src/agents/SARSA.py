@@ -106,7 +106,7 @@ class AgentSARSA(Agent):
         
     def train(self, num_episodes):
         """
-        Entrena al agente SARSA durante un número de episodios.
+        Entrena al agente SARSA durante un número de episodios
         """
         step_display = num_episodes / 10
         for t in tqdm(range(num_episodes)):
