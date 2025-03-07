@@ -71,7 +71,7 @@ class AgentSARSA(Agent):
         # Recorremos cada paso del episodio
         while not done: 
             # Tomar la acción A, observar R, S'
-            new_state, reward, terminated, truncated, info = self.env.step(action)
+            next_state, reward, terminated, truncated, info = self.env.step(action)
             done = terminated or truncated
             total_reward += reward
             steps += 1
