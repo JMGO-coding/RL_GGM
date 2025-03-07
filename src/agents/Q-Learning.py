@@ -8,7 +8,7 @@ from tqdm import tqdm
 #######################################
 
 
-class AgentSARSA(Agent):
+class AgentQLearning(Agent):
     def __init__(self, env: gym.Env, epsilon: float, decay: bool, discount_factor: float, alpha: float):
         """
         Inicializa el agente de decisión
@@ -56,13 +56,10 @@ class AgentSARSA(Agent):
 
     def run_episode(self, seed):
         """
-        Ejecuta un episodio utilizando SARSA y actualiza Q en cada paso
+        Ejecuta un episodio utilizando Q-Learning y actualiza Q en cada paso
         """
         # Inicializar S
         state, info = self.env.reset(seed=seed)
-
-        # Elegir A a partir de S usando política epsilon-greedy
-        action = self.get_action(state) 
         
         done = False
         total_reward = 0
@@ -70,50 +67,43 @@ class AgentSARSA(Agent):
 
         # Recorremos cada paso del episodio
         while not done: 
+            # Elegir A a partir de S usando política epsilon-greedy
+            action = self.get_action(state) 
+        
             # Tomar la acción A, observar R, S'
-            new_state, reward, terminated, truncated, info = self.env.step(action)
+            next_state, reward, terminated, truncated, info = self.env.step(action)
             done = terminated or truncated
             total_reward += reward
             steps += 1
 
-            # Elegir A' a partir de S' usando política epsilon-greedy
-            if not done:
-                next_action = self.get_action(next_state)
-            else:
-                next_action = None  # No hay acción en el estado terminal
+            # Actualización de Q(S, A) con Q-Learning
+            self.update(state, action, reward, next_state)
 
-            # Actualización de Q(S, A) con SARSA
-            self.update(state, action, reward, next_state, next_action)
-
-            # Avanzar al siguiente estado y acción
+            # Avanzar al siguiente estado
             state = next_state
-            action = next_action
 
         # Guardar estadísticas
         self.stats += total_reward  # Acumular la recompensa total del episodio
         self.list_stats.append(self.stats / (len(self.list_stats) + 1))  # Promedio acumulado
         self.episode_lengths.append(steps)
 
-    def update(self, state, action, reward, next_state, next_action):
+    def update(self, state, action, reward, next_state):
         """
-        Actualiza Q en base a la ecuación de actualización de SARSA
+        Actualiza Q en base a la ecuación de actualización de Q-Learning
         """
-        target = reward
-        if next_action is not None:  # Si no es estado terminal
-            target += self.discount_factor * self.Q[next_state, next_action]
-    
-        self.Q[state, action] += self.alpha * (target - self.Q[state, action])
+        # Actualización de Q(S, A) con la fórmula de Q-Learning
+        self.Q[state, action] += self.alpha * (reward + self.discount_factor * np.max(self.Q[next_state]) - self.Q[state, action])
         
     def train(self, num_episodes):
         """
-        Entrena al agente SARSA durante un número de episodios.
+        Entrena al agente Q-Learning durante un número de episodios
         """
         step_display = num_episodes / 10
         for t in tqdm(range(num_episodes)):
             if self.decay:
                 self.epsilon = min(1.0, 1000.0/(t+1))
 
-            # Ejecutar un episodio de SARSA
+            # Ejecutar un episodio de Q-Learning
             self.run_episode(seed=t)  
 
             # Para mostrar la evolución
