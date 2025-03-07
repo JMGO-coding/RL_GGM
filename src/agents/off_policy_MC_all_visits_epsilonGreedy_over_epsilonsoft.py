@@ -26,7 +26,6 @@ class AgentMCOffPolicyAllVisits(Agent):
         self.nA = env.action_space.n
         self.Q = np.zeros([env.observation_space.n, self.nA])
         self.C = np.zeros([env.observation_space.n, self.nA])
-        self.n_visits = np.zeros([env.observation_space.n, self.nA])
         self.epsilon_soft_policy = EpsilonSoftPolicy(epsilon=self.epsilon, nA=self.nA)  # Política de comportamiento (b)
         self.greedy_policy = GreedyFromQPolicy(env=self.env, Q=self.Q)    # Política objetivo (pi)
         self.stats = 0.0
@@ -39,7 +38,6 @@ class AgentMCOffPolicyAllVisits(Agent):
         """
         self.Q = np.zeros([self.env.observation_space.n, self.nA])
         self.C = np.zeros([self.env.observation_space.n, self.nA])
-        self.n_visits = np.zeros([self.env.observation_space.n, self.nA])
         self.greedy_policy = GreedyFromQPolicy(env=self.env, Q=self.Q)
         self.stats = 0.0
         self.list_stats = []
