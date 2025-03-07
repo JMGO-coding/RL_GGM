@@ -21,6 +21,7 @@ class AgentMCOffPolicyAllVisits(Agent):
         # Environment del agente
         self.env: gym.Env = env
         self.epsilon = epsilon
+        self.initial_epsilon = epsilon
         self.discount_factor = discount_factor
         self.decay = decay
         self.nA = env.action_space.n
@@ -36,6 +37,7 @@ class AgentMCOffPolicyAllVisits(Agent):
         """
         Reinicia el agente
         """
+        self.epsilon = self.initial_epsilon
         self.Q = np.zeros([self.env.observation_space.n, self.nA])
         self.C = np.zeros([self.env.observation_space.n, self.nA])
         self.greedy_policy = GreedyFromQPolicy(env=self.env, Q=self.Q)
