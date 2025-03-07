@@ -21,6 +21,7 @@ class AgentSARSA(Agent):
         # Environment del agente
         self.env: gym.Env = env
         self.epsilon = epsilon
+        self.initial_epsilon = epsilon
         self.discount_factor = discount_factor
         self.alpha = alpha
         self.decay = decay
@@ -41,6 +42,7 @@ class AgentSARSA(Agent):
         """
         Reinicia el agente
         """
+        self.epsilon = self.initial_epsilon
         self.Q = np.zeros([self.env.observation_space.n, self.nA])
         self.stats = 0.0
         self.list_stats = []
