@@ -111,10 +111,7 @@ class AgentSemiGradientSARSA(Agent):
 
             # Calcular Q(s,a) para el estado actual y la acción tomada
             self.update(active_features, a, active_features_next, a_next, reward, done)
-
-            if done:
-                break
-
+            
             # Actualiza estado y acción para el siguiente paso
             active_features = active_features_next
             a = a_next
