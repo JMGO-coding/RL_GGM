@@ -58,7 +58,7 @@ class AgentDeepQLearning(Agent):
 
     def reset(self):
         """
-        Reinicia el agente
+        Reinicia el agente.
         """
         self.epsilon = self.initial_epsilon
         self.stats = 0.0
@@ -67,13 +67,13 @@ class AgentDeepQLearning(Agent):
     
     def get_action(self, state):
         """
-        Selecciona una acción en base a un estado de partida y una política epsilon-greedy
+        Selecciona una acción en base a un estado de partida y una política epsilon-greedy.
         """
         return self.epsilon_greedy_policy.get_action(self.Q, state)
 
     def run_episode(self, seed):
         """
-        Ejecuta un episodio utilizando Q-Learning y actualiza Q en cada paso
+        Ejecuta un episodio utilizando Q-Learning y actualiza Q en cada paso.
         """
         # Inicializar S
         state, info = self.env.reset(seed=seed)
@@ -93,8 +93,12 @@ class AgentDeepQLearning(Agent):
             total_reward += reward
             steps += 1
 
-            # Actualización de Q(S, A) con Q-Learning
-            self.update(state, action, reward, next_state)
+            # Guardar experiencia en la memoria de repetición
+            self.memory.push(state, action, reward, next_state, done)
+
+            # Si la memoria tiene suficientes elementos, entrenar el modelo
+            if len(self.memory) > self.batch_size:
+                self.train_step()
 
             # Avanzar al siguiente estado
             state = next_state
@@ -104,16 +108,34 @@ class AgentDeepQLearning(Agent):
         self.list_stats.append(self.stats / (len(self.list_stats) + 1))  # Promedio acumulado
         self.episode_lengths.append(steps)
 
-    def update(self, state, action, reward, next_state):
+    def train_step(self):
         """
-        Actualiza Q en base a la ecuación de actualización de Q-Learning
+        Realiza un paso de entrenamiento usando un minibatch.
         """
-        # Actualización de Q(S, A) con la fórmula de Q-Learning
-        self.Q[state, action] += self.alpha * (reward + self.discount_factor * np.max(self.Q[next_state]) - self.Q[state, action])
+        # Obtener un minibatch aleatorio de experiencias
+        states, actions, rewards, next_states, dones = self.memory.sample(self.batch_size)
+        
+        # Pasar los estados actuales y siguientes por la red neuronal
+        q_values = self.dqn_network(states)  # Q(s, a; theta) para el minibatch
+        q_values_next = self.dqn_network(next_states)  # Q(s', a'; theta) para el minibatch siguiente
+        
+        # Seleccionar las Q-values para las acciones tomadas
+        q_values = q_values.gather(1, actions.unsqueeze(1))  # Esto es Q(s, a) para las acciones tomadas
+        
+        # Calcular los targets
+        target = rewards + (self.discount_factor * q_values_next.max(1)[0].unsqueeze(1)) * (1 - dones.unsqueeze(1))
+        
+        # Calcular la pérdida
+        loss = F.mse_loss(q_values, target)
+
+        # Hacer un paso de gradiente descendente
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
         
     def train(self, num_episodes):
         """
-        Entrena al agente Q-Learning durante un número de episodios
+        Entrena al agente Deep Q-Learning durante un número de episodios.
         """
         step_display = num_episodes / 10
         for t in tqdm(range(num_episodes)):
@@ -133,6 +155,6 @@ class AgentDeepQLearning(Agent):
     def get_stats(self):
         """
         Retorna los resultados estadísticos, incluyendo la evolución de
-        la recompensa acumulada por episodio y la longitud de los episodios
+        la recompensa acumulada por episodio y la longitud de los episodios.
         """
         return self.list_stats, self.episode_lengths
