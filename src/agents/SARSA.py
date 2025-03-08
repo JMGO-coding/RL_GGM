@@ -43,6 +43,7 @@ class AgentSARSA(Agent):
         Reinicia el agente
         """
         self.epsilon = self.initial_epsilon
+        self.epsilon_greedy_policy = EpsilonSoftPolicy(epsilon=self.initial_epsilon, nA=self.nA)
         self.Q = np.zeros([self.env.observation_space.n, self.nA])
         self.stats = 0.0
         self.list_stats = []
