@@ -50,6 +50,7 @@ class AgentSemiGradientSARSA(Agent):
         Reinicia el agente.
         """
         self.epsilon = self.initial_epsilon
+        self.epsilon_greedy_policy = EpsilonGreedyPolicyContinuous(epsilon=self.initial_epsilon, num_actions=self.num_actions)
         self.w = np.zeros([self.total_features, self.num_actions])
         self.stats = 0.0
         self.list_stats = []
