@@ -10,17 +10,17 @@ from wrappers.TileCoding import TileCodingEnv
 
 
 class AgentSemiGradientSARSA(Agent):
-    def __init__(self, env: gym.Env, epsilon: float, decay: bool, discount_factor: float, alpha: float):
+    def __init__(self, tcenv: gym.Env, epsilon: float, decay: bool, discount_factor: float, alpha: float):
         """
         Inicializa el agente de decisión
         """
 
-        assert 0 <= epsilon <= 1
+        assert epsilon > 0
         assert 0 <= discount_factor <= 1
-        assert 0 < alpha <= 1
+        assert alpha > 0
         
         # Environment del agente
-        self.env: gym.Env = env
+        self.tcenv: gym.Env = tcenv
         self.epsilon = epsilon
         self.initial_epsilon = epsilon
         self.discount_factor = discount_factor
@@ -28,8 +28,8 @@ class AgentSemiGradientSARSA(Agent):
         self.decay = decay
         self.nA = env.action_space.n
 
-        # Inicialización de Q(s, a) con valores arbitrarios (a excepción de terminales)
-        self.Q = np.zeros([env.observation_space.n, self.nA])
+        # Inicialización de los pesos w
+        self.w = np.zeros([env.observation_space.n, self.nA])
 
         # Política basada en epsilon-greedy
         self.epsilon_greedy_policy = EpsilonSoftPolicy(epsilon=self.epsilon, nA=self.nA)
@@ -38,16 +38,18 @@ class AgentSemiGradientSARSA(Agent):
         self.stats = 0.0
         self.list_stats = []
         self.episode_lengths = []    # Lista para almacenar las longitudes de los episodios
+        self.returns = []  # Para guardar la recompensa total de cada episodio
 
     def reset(self):
         """
         Reinicia el agente
         """
         self.epsilon = self.initial_epsilon
-        self.Q = np.zeros([self.env.observation_space.n, self.nA])
+        self.w = np.zeros([self.env.observation_space.n, self.nA])
         self.stats = 0.0
         self.list_stats = []
         self.episode_lengths = []
+        self.returns = []  # Para guardar la recompensa total de cada episodio
     
     def get_action(self, state):
         """
@@ -71,10 +73,13 @@ class AgentSemiGradientSARSA(Agent):
 
     def run_episode(self, seed):
         """
-        Ejecuta un episodio utilizando SARSA y actualiza Q en cada paso
+        Ejecuta un episodio utilizando SARSA semi-gradiente y actualiza Q en cada paso
         """
-        # Inicializar S
-        state, info = self.env.reset(seed=seed)
+        # Resetear el entorno (Gymnasium devuelve (obs, info))
+        obs, info = self.tcenv.reset(seed=seed)
+
+        # El método observation() del wrapper actualiza internamente tcenv.last_active_features.
+        active_features = self.tcenv.last_active_features  
 
         # Elegir A a partir de S usando política epsilon-greedy
         action = self.get_action(state) 
@@ -111,29 +116,40 @@ class AgentSemiGradientSARSA(Agent):
 
     def update(self, state, action, reward, next_state, next_action):
         """
-        Actualiza Q en base a la ecuación de actualización de SARSA
+        Actualiza los pesos w utilizando el método SARSA semi-gradiente
         """
-        target = reward
-        if next_action is not None:  # Si no es estado terminal
-            target += self.discount_factor * self.Q[next_state, next_action]
-    
-        self.Q[state, action] += self.alpha * (target - self.Q[state, action])
+        # Calcular Q(s,a) para el estado actual y la acción tomada
+        q_sa = q_value(active_features, a, w)
+        # Si no es estado terminal, calcular Q(s',a')
+        if not (done or truncated):
+            q_sap = q_value(active_features_next, a_next, w)
+            delta = reward + gamma * q_sap - q_sa
+        else:
+            delta = reward - q_sa
+
+        # Actualizar los pesos solo en las features activas para la acción 'a'
+        for i in active_features:
+            w[i, a] += alpha * delta
         
     def train(self, num_episodes):
         """
-        Entrena al agente SARSA durante un número de episodios.
-        """
+        Entrena al agente SARSA semi-gradiente durante un número de episodios
+        """    
         step_display = num_episodes / 10
         for t in tqdm(range(num_episodes)):
             if self.decay:
                 self.epsilon = min(1.0, 1000.0/(t+1))
 
-            # Ejecutar un episodio de SARSA
+            # Ejecutar un episodio de SARSA semi-gradiente
             self.run_episode(seed=t)  
 
             # Para mostrar la evolución
             if t % step_display == 0 and t != 0:
                 print(f"success: {self.stats/t}, epsilon: {self.epsilon}")
+
+        # Después de entrenar, evaluar la política
+        avg_return = np.mean(returns)
+        print(f"Average return over {num_episodes} episodes: {avg_return}")
 
     def get_stats(self):
         """
