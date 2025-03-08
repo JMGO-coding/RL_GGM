@@ -113,6 +113,9 @@ class AgentSARSA(Agent):
             if self.decay:
                 self.epsilon = min(1.0, 1000.0/(t+1))
 
+                # Actualizar la política con el nuevo valor de epsilon
+                self.epsilon_greedy_policy.epsilon = self.epsilon
+
             # Ejecutar un episodio de SARSA
             self.run_episode(seed=t)  
 
