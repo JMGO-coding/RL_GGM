@@ -12,7 +12,7 @@ from wrappers.TileCoding import TileCodingEnv
 class AgentSemiGradientSARSA(Agent):
     def __init__(self, tcenv: gym.Env, epsilon: float, decay: bool, discount_factor: float, alpha: float):
         """
-        Inicializa el agente de decisión
+        Inicializa el agente de decisión.
         """
 
         assert epsilon > 0
@@ -26,13 +26,13 @@ class AgentSemiGradientSARSA(Agent):
         self.discount_factor = discount_factor
         self.alpha = alpha
         self.decay = decay
-        self.nA = env.action_space.n
+        self.num_actions = env.action_space.n
 
         # Inicialización de los pesos w
-        self.w = np.zeros([env.observation_space.n, self.nA])
+        self.w = np.zeros([env.observation_space.n, self.num_actions])
 
         # Política basada en epsilon-greedy
-        self.epsilon_greedy_policy = EpsilonGreedyPolicyContinuous(epsilon=self.epsilon, nA=self.nA)
+        self.epsilon_greedy_policy = EpsilonGreedyPolicyContinuous(epsilon=self.epsilon, num_actions=self.num_actions)
 
         # Estadísticas para realizar seguimiento del rendimiento
         self.stats = 0.0
@@ -42,20 +42,20 @@ class AgentSemiGradientSARSA(Agent):
 
     def reset(self):
         """
-        Reinicia el agente
+        Reinicia el agente.
         """
         self.epsilon = self.initial_epsilon
-        self.w = np.zeros([self.env.observation_space.n, self.nA])
+        self.w = np.zeros([self.env.observation_space.n, self.num_actions])
         self.stats = 0.0
         self.list_stats = []
         self.episode_lengths = []
         self.returns = []  # Para guardar la recompensa total de cada episodio
     
-    def get_action(self, state):
+    def get_action(self, active_features):
         """
-        Selecciona una acción en base a un estado de partida y una política epsilon-greedy
+        Selecciona una acción en base a una política epsilon-greedy.
         """
-        return self.epsilon_greedy_policy.get_action(self.Q, state)
+        return self.epsilon_greedy_policy.get_action(active_features, self.w)
 
     def q_value(active_features, a, weights):
         """
@@ -73,7 +73,7 @@ class AgentSemiGradientSARSA(Agent):
 
     def run_episode(self, seed):
         """
-        Ejecuta un episodio utilizando SARSA semi-gradiente y actualiza Q en cada paso
+        Ejecuta un episodio utilizando SARSA semi-gradiente y actualiza Q en cada paso.
         """
         # Resetear el entorno (Gymnasium devuelve (obs, info))
         obs, info = self.tcenv.reset(seed=seed)
@@ -81,8 +81,8 @@ class AgentSemiGradientSARSA(Agent):
         # El método observation() del wrapper actualiza internamente tcenv.last_active_features.
         active_features = self.tcenv.last_active_features  
 
-        # Elegir A a partir de S usando política epsilon-greedy
-        action = self.get_action(state) 
+        # Seleccionar acción inicial usando epsilon-greedy
+        a = self.get_action(active_features)
         
         done = False
         total_reward = 0
@@ -116,7 +116,7 @@ class AgentSemiGradientSARSA(Agent):
 
     def update(self, state, action, reward, next_state, next_action):
         """
-        Actualiza los pesos w utilizando el método SARSA semi-gradiente
+        Actualiza los pesos w utilizando el método SARSA semi-gradiente.
         """
         # Calcular Q(s,a) para el estado actual y la acción tomada
         q_sa = q_value(active_features, a, w)
@@ -157,6 +157,6 @@ class AgentSemiGradientSARSA(Agent):
     def get_stats(self):
         """
         Retorna los resultados estadísticos, incluyendo la evolución de
-        la recompensa acumulada por episodio y la longitud de los episodios
+        la recompensa acumulada por episodio y la longitud de los episodios.
         """
         return self.list_stats, self.episode_lengths
