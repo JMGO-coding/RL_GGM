@@ -95,6 +95,9 @@ class AgentMCOnPolicyAllVisits(Agent):
             if self.decay:
                 self.epsilon = min(1.0, 1000.0/(t+1))
                 
+                # Actualizar la política con el nuevo valor de epsilon
+                self.epsilon_soft_policy.epsilon = self.epsilon
+                
             episode = self.full_episode(seed = t)  # Generar episodio
             self.update(episode)  # Actualizar Q
 
