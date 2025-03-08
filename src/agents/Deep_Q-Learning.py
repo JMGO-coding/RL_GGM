@@ -2,18 +2,31 @@
 from abc import abstractmethod
 import numpy as np
 from .agent import Agent
-from policies.epsilon_soft import EpsilonSoftPolicy
+from policies.epsilon_greedy_continuous import EpsilonGreedyPolicyContinuous
 import gymnasium as gym
 from tqdm import tqdm
+from networks.DQN_Network impor DQN_Network
+import torch
+import torch.optim as optim
+from memories.ReplayMemory import ReplayMemory
 #######################################
 
 
-class AgentQLearning(Agent):
-    def __init__(self, env: gym.Env, epsilon: float, decay: bool, discount_factor: float, alpha: float):
+class AgentDeepQLearning(Agent):
+    def __init__(self, env: gym.Env, epsilon: float, decay: bool, discount_factor: float, alpha: float, memory_capacity: int, batch_size: int, learning_rate: float):
         """
-        Inicializa el agente de decisión
-        """
+        Inicializa el agente de  Deep Q-Learning.
 
+        Parámetros:
+        - env (gym.Env): El entorno en el que el agente interactúa.
+        - epsilon (float): Probabilidad de exploración para la política epsilon-greedy.
+        - decay (bool): Si la epsilon debe decrecer durante el entrenamiento.
+        - discount_factor (float): Factor de descuento gamma.
+        - alpha (float): Tasa de aprendizaje para el optimizador.
+        - memory_capacity (int): Tamaño máximo de la memoria de repetición.
+        - batch_size (int): Tamaño del minibatch para el entrenamiento.
+        - learning_rate (float): Tasa de aprendizaje del optimizador.
+        """
         assert 0 <= epsilon <= 1
         assert 0 <= discount_factor <= 1
         assert 0 < alpha <= 1
@@ -25,13 +38,18 @@ class AgentQLearning(Agent):
         self.discount_factor = discount_factor
         self.alpha = alpha
         self.decay = decay
+        self.batch_size = batch_size
+        self.learning_rate = learning_rate
+
+        # Definir el espacio de acciones
         self.nA = env.action_space.n
 
-        # Inicialización de Q(s, a) con valores arbitrarios (a excepción de terminales)
-        self.Q = np.zeros([env.observation_space.n, self.nA])
+        # Red neuronal para Q(s, a)
+        self.dqn_network = DQN_Network(input_dim=env.observation_space.shape[0], num_actions=self.nA)
+        self.optimizer = optim.Adam(self.dqn_network.parameters(), lr=self.learning_rate)
 
-        # Política basada en epsilon-greedy
-        self.epsilon_greedy_policy = EpsilonSoftPolicy(epsilon=self.epsilon, nA=self.nA)
+        # Memoria de repetición
+        self.memory = ReplayMemory(memory_capacity)
 
         # Estadísticas para realizar seguimiento del rendimiento
         self.stats = 0.0
@@ -43,7 +61,6 @@ class AgentQLearning(Agent):
         Reinicia el agente
         """
         self.epsilon = self.initial_epsilon
-        self.Q = np.zeros([self.env.observation_space.n, self.nA])
         self.stats = 0.0
         self.list_stats = []
         self.episode_lengths = []
