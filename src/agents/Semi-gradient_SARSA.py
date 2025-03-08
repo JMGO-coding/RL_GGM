@@ -2,7 +2,7 @@
 from abc import abstractmethod
 import numpy as np
 from .agent import Agent
-from policies.epsilon_soft import EpsilonSoftPolicy
+from policies.epsilon_greedy_continuous import EpsilonGreedyPolicyContinuous
 import gymnasium as gym
 from tqdm import tqdm
 from wrappers.TileCoding import TileCodingEnv
@@ -32,7 +32,7 @@ class AgentSemiGradientSARSA(Agent):
         self.w = np.zeros([env.observation_space.n, self.nA])
 
         # Política basada en epsilon-greedy
-        self.epsilon_greedy_policy = EpsilonSoftPolicy(epsilon=self.epsilon, nA=self.nA)
+        self.epsilon_greedy_policy = EpsilonGreedyPolicyContinuous(epsilon=self.epsilon, nA=self.nA)
 
         # Estadísticas para realizar seguimiento del rendimiento
         self.stats = 0.0
@@ -139,6 +139,9 @@ class AgentSemiGradientSARSA(Agent):
         for t in tqdm(range(num_episodes)):
             if self.decay:
                 self.epsilon = min(1.0, 1000.0/(t+1))
+
+                # Actualizar la política con el nuevo valor de epsilon
+                self.epsilon_greedy_policy.epsilon = self.epsilon
 
             # Ejecutar un episodio de SARSA semi-gradiente
             self.run_episode(seed=t)  
