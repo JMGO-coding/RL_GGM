@@ -5,10 +5,11 @@ from .agent import Agent
 from policies.epsilon_soft import EpsilonSoftPolicy
 import gymnasium as gym
 from tqdm import tqdm
+from wrappers.TileCoding import TileCodingEnv
 #######################################
 
 
-class AgentSARSA(Agent):
+class AgentSemiGradientSARSA(Agent):
     def __init__(self, env: gym.Env, epsilon: float, decay: bool, discount_factor: float, alpha: float):
         """
         Inicializa el agente de decisión
@@ -53,6 +54,20 @@ class AgentSARSA(Agent):
         Selecciona una acción en base a un estado de partida y una política epsilon-greedy
         """
         return self.epsilon_greedy_policy.get_action(self.Q, state)
+
+    def q_value(active_features, a, weights):
+        """
+        Calcula q(s,a) como la suma de los pesos para los índices activos.
+    
+        Parámetros:
+          - active_features: lista de índices de features activas para el estado s.
+          - a: acción seleccionada.
+          - weights: matriz de pesos de dimensiones [n_features, n_actions].
+    
+        Retorna:
+          - q: valor aproximado de Q(s,a).
+        """
+        return weights[active_features, a].sum()
 
     def run_episode(self, seed):
         """
