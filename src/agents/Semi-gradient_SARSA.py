@@ -50,7 +50,7 @@ class AgentSemiGradientSARSA(Agent):
         Reinicia el agente.
         """
         self.epsilon = self.initial_epsilon
-        self.w = np.zeros([self.tcenv.observation_space.n, self.num_actions])
+        self.w = np.zeros([self.total_features, self.num_actions])
         self.stats = 0.0
         self.list_stats = []
         self.episode_lengths = []
@@ -69,7 +69,6 @@ class AgentSemiGradientSARSA(Agent):
         Parámetros:
           - active_features: lista de índices de features activas para el estado s.
           - a: acción seleccionada.
-          - weights: matriz de pesos de dimensiones [n_features, n_actions].
     
         Retorna:
           - q: valor aproximado de Q(s,a).
@@ -131,10 +130,10 @@ class AgentSemiGradientSARSA(Agent):
         Actualiza los pesos w utilizando el método SARSA semi-gradiente.
         """
         # Calcular Q(s,a) para el estado actual y la acción tomada
-        q_sa = self.q_value(active_features, a, self.w)
+        q_sa = self.q_value(active_features, a)
         # Si no es estado terminal, calcular Q(s',a')
         if not done:
-            q_sap = self.q_value(active_features_next, a_next, self.w)
+            q_sap = self.q_value(active_features_next, a_next)
             delta = reward + self.discount_factor * q_sap - q_sa
         else:
             delta = reward - q_sa
