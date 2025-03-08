@@ -26,10 +26,15 @@ class AgentSemiGradientSARSA(Agent):
         self.discount_factor = discount_factor
         self.alpha = alpha
         self.decay = decay
+
+        # Número de acciones en el entorno original
         self.num_actions = self.tcenv.action_space.n
 
+        # Número total de características en el aproximador lineal:
+        self.total_features = self.tcenv.n_tilings * np.prod(self.tcenv.bins)
+
         # Inicialización de los pesos w
-        self.w = np.zeros([self.tcenv.observation_space.n, self.num_actions])
+        self.w = np.zeros([self.total_features, self.num_actions])
 
         # Política basada en epsilon-greedy
         self.epsilon_greedy_policy = EpsilonGreedyPolicyContinuous(epsilon=self.epsilon, num_actions=self.num_actions)
