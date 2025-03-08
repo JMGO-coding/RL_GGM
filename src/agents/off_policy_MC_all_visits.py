@@ -38,6 +38,7 @@ class AgentMCOffPolicyAllVisits(Agent):
         Reinicia el agente
         """
         self.epsilon = self.initial_epsilon
+        self.epsilon_soft_policy = EpsilonSoftPolicy(epsilon=self.initial_epsilon, nA=self.nA)
         self.Q = np.zeros([self.env.observation_space.n, self.nA])
         self.C = np.zeros([self.env.observation_space.n, self.nA])
         self.greedy_policy = GreedyFromQPolicy(env=self.env, Q=self.Q)
