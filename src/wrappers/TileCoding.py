@@ -1,3 +1,7 @@
+import gym
+import numpy as np
+import random
+
 class TileCodingEnv(ObservationWrapper):
     """
     TileCodingEnv es un envoltorio para un entorno Gym que aplica la técnica de Tile Coding.
