@@ -90,46 +90,53 @@ class AgentSemiGradientSARSA(Agent):
 
         # Recorremos cada paso del episodio
         while not done: 
-            # Tomar la acción A, observar R, S'
-            new_state, reward, terminated, truncated, info = self.env.step(action)
+            # Ejecutar la acción 'a' y obtener la siguiente observación
+            obs_next, reward, terminated, truncated, info = self.tcenv.step(a)
             done = terminated or truncated
             total_reward += reward
             steps += 1
 
-            # Elegir A' a partir de S' usando política epsilon-greedy
+             # Después de step, tcenv.last_active_features se actualiza para el nuevo estado s'
+            active_features_next = self.tcenv.last_active_features
+
+           # Seleccionar la siguiente acción a' (si el episodio continúa)
             if not done:
-                next_action = self.get_action(next_state)
+                a_next = self.get_action(active_features_next)
             else:
-                next_action = None  # No hay acción en el estado terminal
+                a_next = None  # No se usa si es terminal
 
-            # Actualización de Q(S, A) con SARSA
-            self.update(state, action, reward, next_state, next_action)
+            # Calcular Q(s,a) para el estado actual y la acción tomada
+            self.update(state, active_features, a, active_features_next, a_next, reward)
 
-            # Avanzar al siguiente estado y acción
-            state = next_state
-            action = next_action
+            if done:
+                break
+
+            # Actualiza estado y acción para el siguiente paso
+            active_features = active_features_next
+            a = a_next
 
         # Guardar estadísticas
+        self.returns.append(total_reward)
         self.stats += total_reward  # Acumular la recompensa total del episodio
         self.list_stats.append(self.stats / (len(self.list_stats) + 1))  # Promedio acumulado
         self.episode_lengths.append(steps)
 
-    def update(self, state, action, reward, next_state, next_action):
+    def update(self, active_features, a, active_features_next, a_next, reward):
         """
         Actualiza los pesos w utilizando el método SARSA semi-gradiente.
         """
         # Calcular Q(s,a) para el estado actual y la acción tomada
-        q_sa = q_value(active_features, a, w)
+        q_sa = q_value(active_features, a, self.w)
         # Si no es estado terminal, calcular Q(s',a')
         if not (done or truncated):
-            q_sap = q_value(active_features_next, a_next, w)
-            delta = reward + gamma * q_sap - q_sa
+            q_sap = q_value(active_features_next, a_next, self.w)
+            delta = reward + self.discount_factor * q_sap - q_sa
         else:
             delta = reward - q_sa
 
         # Actualizar los pesos solo en las features activas para la acción 'a'
         for i in active_features:
-            w[i, a] += alpha * delta
+            self.w[i, a] += self.alpha * delta
         
     def train(self, num_episodes):
         """
@@ -148,7 +155,7 @@ class AgentSemiGradientSARSA(Agent):
 
             # Para mostrar la evolución
             if t % step_display == 0 and t != 0:
-                print(f"success: {self.stats/t}, epsilon: {self.epsilon}")
+                print(f"Episode {t+1}/{num_episodes}, total reward: {total_reward}")
 
         # Después de entrenar, evaluar la política
         avg_return = np.mean(returns)
