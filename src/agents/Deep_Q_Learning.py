@@ -129,7 +129,8 @@ class AgentDeepQLearning(Agent):
         
         # Calcular los targets
         target = rewards + (self.discount_factor * q_values_next.max(1)[0].unsqueeze(1)) * (1 - dones.float().unsqueeze(1))
-        
+        print('q_values': q_values.size(())
+        print('target': target.size())
         # Calcular la pérdida
         loss = F.mse_loss(q_values, target)
 
