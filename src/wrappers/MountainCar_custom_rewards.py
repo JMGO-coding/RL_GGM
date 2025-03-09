@@ -2,7 +2,7 @@ import gymnasium as gym
 from gymnasium import spaces
 import numpy as np
 
-class CustomMountainCarWrapper(gym.Wrapper):
+class MountainCarCustomRewards(gym.Wrapper):
     def __init__(self, env, max_steps=500, negative_reward=-1, goal_reward=100):
         """
         Wrapper para el entorno MountainCar para modificar los pasos y recompensas.
