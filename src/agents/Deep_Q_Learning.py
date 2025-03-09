@@ -9,6 +9,7 @@ from networks.DQN_Network import DQN_Network
 import torch
 import torch.optim as optim
 from memories.ReplayMemory import ReplayMemory
+import torch.nn.functional as F
 #######################################
 
 
