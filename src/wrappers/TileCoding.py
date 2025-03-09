@@ -132,7 +132,7 @@ class TileCodingEnv(ObservationWrapper):
         # displacement_vector se ajusta automáticamente generando un array de números impares
         # Estos valores se usan posteriormente para calcular los desplazamientos específicos en cada dimensión al crear las tilings (rejillas).
         # ¿Por qué esos valores? Porque son los recomendados: los primeros números impares.
-        displacement_vector = np.arange(1, 2 * len(bins), 2)
+        displacement_vector = np.arange(1, 2 * len(self.bins), 2)
 
 
         tilings = []  # Lista que almacenará todas las tilings generadas.
@@ -183,7 +183,7 @@ class TileCodingEnv(ObservationWrapper):
 
             # Para cada dimensión, se crean los buckets que dividen el intervalo de low_i a high_i en 'bins' partes,
             # generando 'l-1' puntos (límites) para cada dimensión.
-            buckets_i = [np.linspace(j, k, l - 1) for j, k, l in zip(dlow_i, dhigh_i, bins)]
+            buckets_i = [np.linspace(j, k, l - 1) for j, k, l in zip(dlow_i, dhigh_i, self.bins)]
 
             # Se añade la tiling actual (lista de buckets para cada dimensión) a la lista de tilings.
             tilings.append(buckets_i)
