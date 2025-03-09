@@ -73,7 +73,7 @@ class AgentDeepQLearning(Agent):
         """
         Selecciona una acción en base a un estado de partida y una política epsilon-greedy.
         """
-        return self.epsilon_greedy_policy.get_action(self.Q, state)
+        return self.epsilon_greedy_policy.get_action(state)
 
     def run_episode(self, seed):
         """
