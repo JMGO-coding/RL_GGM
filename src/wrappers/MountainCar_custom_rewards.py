@@ -3,51 +3,53 @@ from gymnasium import spaces
 import numpy as np
 
 class MountainCarCustomRewards(gym.Wrapper):
-    def __init__(self, env, max_steps=500, negative_reward=-1, goal_reward=100):
+    def __init__(self, env, negative_reward=-1, goal_reward=100, velocity_factor=10, progress_factor=5):
         """
-        Wrapper para el entorno MountainCar para modificar los pasos y recompensas.
-        
-        :param env: El entorno original (MountainCar).
-        :param max_steps: Número máximo de pasos por episodio.
-        :param negative_reward: Recompensa por cada paso dado (por defecto -1).
-        :param goal_reward: Recompensa al llegar a la cima de la montaña (por defecto 100).
+        Wrapper para modificar las recompensas del entorno MountainCar.
+
+        :param env: Entorno original (MountainCar).
+        :param negative_reward: Penalización por cada paso.
+        :param goal_reward: Recompensa al alcanzar la cima.
+        :param velocity_factor: Factor de recompensa por velocidad.
+        :param progress_factor: Factor de recompensa por progreso en la posición.
         """
         super().__init__(env)
-        self.max_steps = max_steps
         self.negative_reward = negative_reward
         self.goal_reward = goal_reward
-        self.steps = 0
+        self.velocity_factor = velocity_factor
+        self.progress_factor = progress_factor
+        self.last_position = None
 
     def reset(self, **kwargs):
-        """
-        Resetea el entorno. Reinicia el contador de pasos.
-        """
-        self.steps = 0
-        return super().reset(**kwargs)
+        """ Reinicia el entorno y guarda la posición inicial. """
+        obs, info = self.env.reset(**kwargs)
+        self.last_position = obs[0]  # Guardar la posición inicial
+        return obs, info
 
     def step(self, action):
         """
-        Modifica la recompensa y el límite de pasos en el entorno.
+        Modifica la recompensa del entorno.
         """
-        # Realiza un paso en el entorno original
         observation, reward, done, truncated, info = super().step(action)
+        position, velocity = observation  # Extraer la posición y la velocidad
         
-        # Aumenta el contador de pasos
-        self.steps += 1
-        
-        # Modifica la recompensa por movimiento
+        # Penalización por cada paso (opcional)
         reward = self.negative_reward
+
+        # Incentivar la velocidad
+        reward += self.velocity_factor * abs(velocity)  
+
+        # Incentivar el progreso en la posición
+        reward += self.progress_factor * (position - self.last_position)  
         
-        # Si el agente ha alcanzado la cima (posición >= 0.5), asigna la recompensa del objetivo
-        if observation[0] >= 0.5:
-            reward = self.goal_reward
-            done = True  # El episodio termina cuando el agente llega a la cima
+        # Actualizar la última posición
+        self.last_position = position
 
-        # Si el número de pasos alcanza el límite, termina el episodio
-        if self.steps >= self.max_steps:
-            done = True  # Forzar el término del episodio si se alcanza el límite de pasos
-
+        # Si llega a la cima, darle una gran recompensa y terminar el episodio
+        if position >= 0.5:
+            reward += self.goal_reward
+            done = True  
+        
         return observation, reward, done, truncated, info
 
-    def render(self, mode='human'):
-        return self.env.render(mode)
+
