@@ -52,7 +52,7 @@ class AgentDeepQLearning(Agent):
         self.memory = ReplayMemory(memory_capacity)
 
         # Política basada en epsilon-greedy
-        self.epsilon_greedy_policy = EpsilonSoftPolicy(epsilon=self.epsilon, num_actions=self.nA, dqn_network = self.dqn_network)
+        self.epsilon_greedy_policy = EpsilonGreedyPolicyDQN(epsilon=self.epsilon, num_actions=self.nA, dqn_network = self.dqn_network)
 
         # Estadísticas para realizar seguimiento del rendimiento
         self.stats = 0.0
@@ -64,7 +64,7 @@ class AgentDeepQLearning(Agent):
         Reinicia el agente.
         """
         self.epsilon = self.initial_epsilon
-        self.epsilon_greedy_policy = EpsilonSoftPolicy(epsilon=self.initial_epsilon, num_actions=self.nA, dqn_network = self.dqn_network)
+        self.epsilon_greedy_policy = EpsilonGreedyPolicyDQN(epsilon=self.initial_epsilon, num_actions=self.nA, dqn_network = self.dqn_network)
         self.stats = 0.0
         self.list_stats = []
         self.episode_lengths = []
