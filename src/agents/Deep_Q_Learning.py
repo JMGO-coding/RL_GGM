@@ -5,7 +5,7 @@ from .agent import Agent
 from policies.epsilon_greedy_DQN import EpsilonGreedyPolicyDQN
 import gymnasium as gym
 from tqdm import tqdm
-from networks.DQN_Network impor DQN_Network
+from networks.DQN_Network import DQN_Network
 import torch
 import torch.optim as optim
 from memories.ReplayMemory import ReplayMemory
