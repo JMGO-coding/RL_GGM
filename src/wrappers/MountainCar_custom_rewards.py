@@ -33,15 +33,16 @@ class MountainCarCustomRewards(gym.Wrapper):
         observation, reward, done, truncated, info = super().step(action)
         position, velocity = observation  # Extraer la posición y la velocidad
         
-        # Penalización por cada paso (opcional)
+        # Penalización por cada paso
         reward = self.negative_reward
 
         # Incentivar la velocidad
         reward += self.velocity_factor * abs(velocity)  
 
-        # Incentivar el progreso en la posición
-        reward += self.progress_factor * (position - self.last_position)  
-        
+        # Incentivar el progreso en la posición (evita restar None)
+        if self.last_position is not None:
+            reward += self.progress_factor * (position - self.last_position)
+
         # Actualizar la última posición
         self.last_position = position
 
@@ -51,5 +52,6 @@ class MountainCarCustomRewards(gym.Wrapper):
             done = True  
         
         return observation, reward, done, truncated, info
+
 
 
