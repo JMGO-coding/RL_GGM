@@ -32,7 +32,7 @@ class EpsilonGreedyPolicyContinuous:
 
         return action
 
-    def q_value(active_features, a, weights):
+    def q_value(self, active_features, a, weights):
         """
         Calcula q(s,a) como la suma de los pesos para los índices activos.
     
@@ -46,7 +46,7 @@ class EpsilonGreedyPolicyContinuous:
         """
         return weights[active_features, a].sum()
 
-    def compute_q_values(active_features, num_actions, w):
+    def compute_q_values(self, active_features, num_actions, w):
         """
         Calcula Q(s,a) para todas las acciones a, dado un vector de features activas.
     
@@ -60,5 +60,5 @@ class EpsilonGreedyPolicyContinuous:
         """
         q_vals = np.zeros(num_actions)
         for a in range(num_actions):
-            q_vals[a] = q_value(active_features, a, w) # Invoca a la función anterior
+            q_vals[a] = self.q_value(active_features, a, w) # Invoca a la función anterior
         return q_vals
