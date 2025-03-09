@@ -1,6 +1,7 @@
 import gym
 import numpy as np
 import random
+from gymnasium import ObservationWrapper
 
 class TileCodingEnv(ObservationWrapper):
     """
