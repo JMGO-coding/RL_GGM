@@ -31,6 +31,10 @@ class AgentDeepQLearning(Agent):
         assert 0 <= epsilon <= 1
         assert 0 <= discount_factor <= 1
         assert 0 < alpha <= 1
+
+        # Verificar si hay una GPU disponible y establece el dispositivo (GPU o CPU)
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        print(f"Usando dispositivo: {self.device}")
         
         # Environment del agente
         self.env: gym.Env = env
@@ -46,7 +50,7 @@ class AgentDeepQLearning(Agent):
         self.nA = env.action_space.n
 
         # Red neuronal para Q(s, a)
-        self.dqn_network = DQN_Network(input_dim=env.observation_space.shape[0], num_actions=self.nA)
+        self.dqn_network = DQN_Network(input_dim=env.observation_space.shape[0], num_actions=self.nA).to(self.device)
         self.optimizer = optim.Adam(self.dqn_network.parameters(), lr=self.learning_rate)
 
         # Memoria de repetición
@@ -119,6 +123,13 @@ class AgentDeepQLearning(Agent):
         """
         # Obtener un minibatch aleatorio de experiencias
         states, actions, rewards, next_states, dones = self.memory.sample(self.batch_size)
+
+        # Mover los tensores a la GPU si está disponible
+        states = states.to(self.device)
+        next_states = next_states.to(self.device)
+        actions = actions.to(self.device)
+        rewards = rewards.to(self.device)
+        dones = dones.to(self.device)
         
         # Pasar los estados actuales y siguientes por la red neuronal
         q_values = self.dqn_network(states)  # Q(s, a; theta) para el minibatch
