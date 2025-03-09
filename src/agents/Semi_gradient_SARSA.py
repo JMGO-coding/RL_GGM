@@ -61,7 +61,6 @@ class AgentSemiGradientSARSA(Agent):
         """
         Selecciona una acción en base a una política epsilon-greedy.
         """
-        print(active_features)
         return self.epsilon_greedy_policy.get_action(active_features, self.w)
 
     def q_value(self, active_features, a):
