@@ -42,10 +42,10 @@ class ReplayMemory:
         states, actions, rewards, next_states, dones = zip(*batch)
 
         # Convertimos las listas en tensores de PyTorch
-        states = torch.stack(states)
+        states = torch.stack([torch.tensor(s, dtype=torch.float32) for s in states])
         actions = torch.tensor(actions, dtype=torch.long)
         rewards = torch.tensor(rewards, dtype=torch.float)
-        next_states = torch.stack(next_states)
+        next_states = torch.stack([torch.tensor(ns, dtype=torch.float32) for ns in next_states])
         dones = torch.tensor(dones, dtype=torch.bool)
 
         return states, actions, rewards, next_states, dones
